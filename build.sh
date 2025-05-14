@@ -1,4 +1,5 @@
 #! /usr/bin/bash
 
 yasm -o ./build/main.o -f elf64 ./main.asm
-ld -o ./build/main ./build/main.o
+yasm -o ./build/putint.o -f elf64 ./putint.asm
+ld -o ./build/main ./build/main.o ./build/putint.o
