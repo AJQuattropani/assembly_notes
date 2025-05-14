@@ -7,13 +7,21 @@ section .bss
   out_buff resb BUFF_ALLOC_SIZE
 
 %macro putchar 1
-  mov out_buff[0], %1 
+  push rbp ; prefix
+  mov rbp, rsp
+  sub rsp, 1
+  
+  mov [rsp], %1
+
   push 0x1
   pop rax ; write
   mov rdi, rax ; stdout
-  mov rsi, out_buff
+  mov rsi, rsp
   mov rdx, 1
   syscall
+
+  mov rsp, rbp
+  pop rbp
 %endmacro
 
 %macro putint_hex 1
@@ -23,7 +31,13 @@ section .bss
 
 %macro putint_dec 1
   mov rdi, %1
+  push rbp
+  mov rbp, rsp
+  sub rsp, BUFF_DX_UINT
   call _putint_dec
+
+  mov rsp, rbp
+  pop rbp
 %endmacro
 
 %macro putint_bin 1
@@ -67,7 +81,7 @@ _pi_l1:
 
 _putint_dec
   mov rax, rdi ; set rax to rdi 
-  mov rsi, BUFF_DX_UINT-1 ; set to last index
+  ;mov rsi, BUFF_DX_UINT-1 ; set to last index
   mov rcx, 10
 _pi_l2:
   div rcx ; div ax / 10
@@ -76,8 +90,8 @@ _pi_l2:
   sub rdi, rax ; remainder
   ; convert into number
   add dil, byte 0x30
-  mov out_buff[rsi], dil ; map to nums
-  dec rsi
+  mov [rbp], dil ; map to nums
+  dec rbp
   pop rax ; pop divided val
   cmp rax, 0 ; test if its 0
   mov rdi, rax
@@ -86,7 +100,7 @@ _pi_l2:
   push 0x1 ; syscall 1
   pop rax
   mov rdi, rax ; stdout
-  mov rsi, out_buff ;pointer to buffer
+  mov rsi, rsp ;pointer to buffer
   mov rdx, BUFF_DX_UINT
   syscall
 
