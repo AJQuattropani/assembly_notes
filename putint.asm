@@ -1,10 +1,6 @@
 %define BUFF_DX_UINT 20 ; decimal buff size
 %define BUFF_HX_UINT 16 ; hex buff size
 %define BUFF_BX_UINT 64 ; binary buff size
-%define BUFF_ALLOC_SIZE BUFF_BX_UINT
-
-section .bss
-  out_buff resb BUFF_ALLOC_SIZE
 
 %macro putchar 1
   push rbp ; prefix
@@ -26,7 +22,13 @@ section .bss
 
 %macro putint_hex 1
   mov rdi, %1
+  push rbp
+  mov rbp, rsp
+  sub rsp, BUFF_HX_UINT
   call _putint_hex
+
+  mov rsp, rbp
+  pop rbp
 %endmacro
 
 %macro putint_dec 1
@@ -42,13 +44,18 @@ section .bss
 
 %macro putint_bin 1
   mov rdi, %1
+  push rbp
+  mov rbp, rsp
+  sub rsp, BUFF_BX_UINT
   call _putint_bin
+
+  mov rsp, rbp
+  pop rbp
 %endmacro
 
 section .text
 _putint_hex: ; rdi: integer
   mov rax, rdi
-  mov rsi, BUFF_HX_UINT-1 ; set to last index
 _pi_l1:
   shr rdi, 4 ; div by 16
   push rdi ; push divided val
@@ -62,8 +69,8 @@ _pi_l1:
   mov dl, 0x27
   mul dl ; al = 0 when less than 0, al = 31 when greater
   add al, dil
-  mov out_buff[rsi], al ; map to nums
-  dec rsi
+  dec rbp
+  mov byte [rbp], al ; map to nums
   pop rax ; pop divided val
   mov rdi, rax
   cmp rax, 0 ; test if its 0
@@ -72,7 +79,7 @@ _pi_l1:
   push 0x1 ; syscall 1
   pop rax
   mov rdi, rax ; stdout
-  mov rsi, out_buff ; pointer to buffer
+  mov rsi, rbp ; pointer to buffer
   mov rdx, BUFF_HX_UINT  ; buff size
   syscall
 
@@ -81,7 +88,6 @@ _pi_l1:
 
 _putint_dec
   mov rax, rdi ; set rax to rdi 
-  ;mov rsi, BUFF_DX_UINT-1 ; set to last index
   mov rcx, 10
 _pi_l2:
   div rcx ; div ax / 10
@@ -90,8 +96,8 @@ _pi_l2:
   sub rdi, rax ; remainder
   ; convert into number
   add dil, byte 0x30
-  mov [rbp], dil ; map to nums
   dec rbp
+  mov byte [rbp], dil ; map to nums
   pop rax ; pop divided val
   cmp rax, 0 ; test if its 0
   mov rdi, rax
@@ -100,7 +106,8 @@ _pi_l2:
   push 0x1 ; syscall 1
   pop rax
   mov rdi, rax ; stdout
-  mov rsi, rsp ;pointer to buffer
+  
+  mov rsi, rbp ;pointer to buffer
   mov rdx, BUFF_DX_UINT
   syscall
 
@@ -109,11 +116,11 @@ _pi_l2:
 
 _putint_bin:
   mov rax, rdi
-  mov rsi, BUFF_BX_UINT-1 ; set to last index
 _pi_l3:
   and rdi, 1 ; rightmost bit
   add rdi, 0x30
-  mov out_buff[rsi], dil ; map to nums
+  dec rbp
+  mov [rbp], dil ; map to nums
   shr rax, 1
   mov rdi, rax
   dec rsi
@@ -123,7 +130,7 @@ _pi_l3:
   push 0x1 ; syscall 1
   pop rax
   mov rdi, rax ; stdout
-  mov rsi, out_buff ; buffer
+  mov rsi, rbp ; buffer
   mov rdx, BUFF_BX_UINT ; buff size
   syscall
 
