@@ -1,4 +1,5 @@
 %include "putint.asm"
+%include "readint.asm"
 
 %macro exit 1
   push %1
@@ -13,10 +14,13 @@ _exit:
   pop rdi
   syscall
 _start:
-  putint_dec [NUM]
-  putchar byte 0xa
+  readchar
+
+  putchar 0xa
+  ;readint_hex
+  
   putint_hex [NUM]
-  putchar byte 0xa
+  putchar 0xa
   putint_bin [NUM]
   exit 0
 _main:
