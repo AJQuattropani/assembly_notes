@@ -1,20 +1,17 @@
-%define BUFF_DX_UINT 20 ; decimal buff size
-%define BUFF_HX_UINT 16 ; hex buff size
-%define BUFF_BX_UINT 64 ; binary buff size
+%ifndef __PUTINT_H
+%define __PUTINT_H
+
+%include "io.asm"
 
 %macro putchar 1
   push rbp ; prefix
   mov rbp, rsp
   sub rsp, 1
-  
-  mov [rsp], %1
 
-  push 0x1
-  pop rax ; write
-  mov rdi, rax ; stdout
-  mov rsi, rsp
-  mov rdx, 1
-  syscall
+  dec rbp
+  mov [rbp], byte %1
+
+  write rbp, 1
 
   mov rsp, rbp
   pop rbp
@@ -76,40 +73,7 @@ _pi_l1:
   cmp rax, 0 ; test if its 0
   jne _pi_l1 ; if its not 0 jump back
   
-  push 0x1 ; syscall 1
-  pop rax
-  mov rdi, rax ; stdout
-  mov rsi, rbp ; pointer to buffer
-  mov rdx, BUFF_HX_UINT  ; buff size
-  syscall
-
-  xor rax, rax ; return 0
-  ret
-
-_putint_dec
-  mov rax, rdi ; set rax to rdi 
-  mov rcx, 10
-_pi_l2:
-  div rcx ; div ax / 10
-  push rax ; push divded val
-  mul rcx ; mul ax 10
-  sub rdi, rax ; remainder
-  ; convert into number
-  add dil, byte 0x30
-  dec rbp
-  mov byte [rbp], dil ; map to nums
-  pop rax ; pop divided val
-  cmp rax, 0 ; test if its 0
-  mov rdi, rax
-  jne _pi_l2 ; if its not 0 jump back
-  
-  push 0x1 ; syscall 1
-  pop rax
-  mov rdi, rax ; stdout
-  
-  mov rsi, rbp ;pointer to buffer
-  mov rdx, BUFF_DX_UINT
-  syscall
+  write rbp, BUFF_HX_UINT
 
   xor rax, rax ; return 0
   ret
@@ -127,14 +91,9 @@ _pi_l3:
   cmp rax, 0
   jne _pi_l3
 
-  push 0x1 ; syscall 1
-  pop rax
-  mov rdi, rax ; stdout
-  mov rsi, rbp ; buffer
-  mov rdx, BUFF_BX_UINT ; buff size
-  syscall
+  write rbp, BUFF_BX_UINT
 
   xor rax, rax
   ret
 
-
+%endif
